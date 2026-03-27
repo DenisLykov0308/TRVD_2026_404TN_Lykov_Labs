@@ -1,0 +1,25 @@
+DO
+$$
+BEGIN
+   IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'admin') THEN
+      CREATE ROLE admin WITH LOGIN PASSWORD 'admin';
+   ELSE
+      ALTER ROLE admin WITH LOGIN PASSWORD 'admin';
+   END IF;
+END
+$$;
+
+SELECT 'CREATE DATABASE warehouse_db OWNER admin'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'warehouse_db')
+\gexec
+
+GRANT ALL PRIVILEGES ON DATABASE warehouse_db TO admin;
+
+\connect warehouse_db
+
+GRANT USAGE, CREATE ON SCHEMA public TO admin;
+ALTER SCHEMA public OWNER TO admin;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO admin;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO admin;
+ALTER DEFAULT PRIVILEGES FOR ROLE admin IN SCHEMA public GRANT ALL ON TABLES TO admin;
+ALTER DEFAULT PRIVILEGES FOR ROLE admin IN SCHEMA public GRANT ALL ON SEQUENCES TO admin;
