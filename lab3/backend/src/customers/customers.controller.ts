@@ -1,10 +1,19 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+﻿import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
+import { ADMIN_ROLE_NAMES } from '../auth/auth.constants';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { IdParamDto } from '../common/dto/id-param.dto';
+import { CustomersService } from './customers.service';
 import { CreateCustomerDto, UpdateCustomerDto } from './dto/customer.dto';
 import { CustomerResponseDto } from './dto/customer-response.dto';
-import { CustomersService } from './customers.service';
 
+@ApiBearerAuth()
 @ApiTags('customers')
 @Controller('customers')
 export class CustomersController {
@@ -24,6 +33,7 @@ export class CustomersController {
     return this.customersService.findOne(params.id);
   }
 
+  @Roles(...ADMIN_ROLE_NAMES)
   @Post()
   @ApiOperation({ summary: 'Створити клієнта' })
   @ApiCreatedResponse({ type: CustomerResponseDto })
@@ -31,6 +41,7 @@ export class CustomersController {
     return this.customersService.create(dto);
   }
 
+  @Roles(...ADMIN_ROLE_NAMES)
   @Patch(':id')
   @ApiOperation({ summary: 'Оновити клієнта' })
   @ApiOkResponse({ type: CustomerResponseDto })
@@ -38,6 +49,7 @@ export class CustomersController {
     return this.customersService.update(params.id, dto);
   }
 
+  @Roles(...ADMIN_ROLE_NAMES)
   @Delete(':id')
   @ApiOperation({ summary: 'Видалити клієнта' })
   @ApiOkResponse({ type: CustomerResponseDto })
@@ -45,4 +57,3 @@ export class CustomersController {
     return this.customersService.remove(params.id);
   }
 }
-

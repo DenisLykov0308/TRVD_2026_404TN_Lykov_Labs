@@ -1,10 +1,11 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+﻿import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { IdParamDto } from '../common/dto/id-param.dto';
 import { CreateStockShipmentDto } from './dto/create-stock-shipment.dto';
 import { StockShipmentResponseDto } from './dto/stock-shipment-response.dto';
 import { StockShipmentsService } from './stock-shipments.service';
 
+@ApiBearerAuth()
 @ApiTags('stock-shipments')
 @Controller('stock-shipments')
 export class StockShipmentsController {
@@ -31,4 +32,3 @@ export class StockShipmentsController {
     return this.stockShipmentsService.create(dto);
   }
 }
-

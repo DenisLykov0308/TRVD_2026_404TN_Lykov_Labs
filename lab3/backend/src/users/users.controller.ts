@@ -1,10 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+﻿import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ADMIN_ROLE_NAMES } from '../auth/auth.constants';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { IdParamDto } from '../common/dto/id-param.dto';
 import { CreateUserDto, UpdateUserDto } from './dto/create-user.dto';
 import { UserResponseDto } from './dto/user-response.dto';
 import { UsersService } from './users.service';
 
+@ApiBearerAuth()
+@Roles(...ADMIN_ROLE_NAMES)
 @ApiTags('users')
 @Controller('users')
 export class UsersController {
@@ -45,4 +49,3 @@ export class UsersController {
     return this.usersService.remove(params.id);
   }
 }
-

@@ -1,8 +1,12 @@
-import { Controller, Get } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+﻿import { Controller, Get } from '@nestjs/common';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ADMIN_ROLE_NAMES } from '../auth/auth.constants';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { RoleResponseDto } from './role-response.dto';
 import { RolesService } from './roles.service';
 
+@ApiBearerAuth()
+@Roles(...ADMIN_ROLE_NAMES)
 @ApiTags('roles')
 @Controller('roles')
 export class RolesController {
@@ -15,4 +19,3 @@ export class RolesController {
     return this.rolesService.findAll();
   }
 }
-

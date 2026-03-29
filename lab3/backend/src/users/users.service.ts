@@ -1,9 +1,12 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+﻿import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { RolesRepository } from '../roles/roles.repository';
 import { CreateUserDto, UpdateUserDto } from './dto/create-user.dto';
 import { UserResponseDto } from './dto/user-response.dto';
 import { UsersRepository } from './users.repository';
+
+const PASSWORD_SALT_ROUNDS = 10;
+const DEFAULT_SIGNUP_ROLE_NAME = 'User';
 
 type UserWithRole = {
   id: number;
@@ -16,6 +19,12 @@ type UserWithRole = {
     id: number;
     name: string;
   };
+};
+
+type RegisterUserInput = {
+  full_name: string;
+  email: string;
+  password: string;
 };
 
 @Injectable()
@@ -39,22 +48,28 @@ export class UsersService {
     return this.toDto(user as UserWithRole);
   }
 
+  async register(input: RegisterUserInput): Promise<UserResponseDto> {
+    const role = await this.rolesRepository.getOrCreateByName(DEFAULT_SIGNUP_ROLE_NAME);
+
+    return this.createUser({
+      full_name: input.full_name,
+      email: input.email,
+      password: input.password,
+      role_id: role.id,
+      is_active: true,
+    });
+  }
+
   async create(dto: CreateUserDto): Promise<UserResponseDto> {
     await this.ensureRoleExists(dto.role_id);
-    const existingUser = await this.usersRepository.findByEmail(dto.email);
-    if (existingUser) {
-      throw new BadRequestException('Користувач з таким email вже існує.');
-    }
 
-    const user = await this.usersRepository.create({
+    return this.createUser({
       full_name: dto.full_name,
       email: dto.email,
-      password_hash: await bcrypt.hash(dto.password, 10),
+      password: dto.password,
       role_id: dto.role_id,
       is_active: dto.is_active ?? true,
     });
-
-    return this.toDto(user as UserWithRole);
   }
 
   async update(id: number, dto: UpdateUserDto): Promise<UserResponseDto> {
@@ -74,7 +89,7 @@ export class UsersService {
     const user = await this.usersRepository.update(id, {
       full_name: dto.full_name,
       email: dto.email,
-      password_hash: dto.password ? await bcrypt.hash(dto.password, 10) : undefined,
+      password_hash: dto.password ? await this.hashPassword(dto.password) : undefined,
       role_id: dto.role_id,
       is_active: dto.is_active,
     });
@@ -89,11 +104,37 @@ export class UsersService {
   }
 
   private async ensureRoleExists(roleId: number) {
-    const roles = await this.rolesRepository.findAll();
-    const exists = roles.some((role: { id: number }) => role.id === roleId);
-    if (!exists) {
+    const role = await this.rolesRepository.findById(roleId);
+    if (!role) {
       throw new NotFoundException('Роль не знайдено.');
     }
+  }
+
+  private async createUser(input: {
+    full_name: string;
+    email: string;
+    password: string;
+    role_id: number;
+    is_active: boolean;
+  }): Promise<UserResponseDto> {
+    const existingUser = await this.usersRepository.findByEmail(input.email);
+    if (existingUser) {
+      throw new BadRequestException('Користувач з таким email вже існує.');
+    }
+
+    const user = await this.usersRepository.create({
+      full_name: input.full_name,
+      email: input.email,
+      password_hash: await this.hashPassword(input.password),
+      role_id: input.role_id,
+      is_active: input.is_active,
+    });
+
+    return this.toDto(user as UserWithRole);
+  }
+
+  private hashPassword(password: string) {
+    return bcrypt.hash(password, PASSWORD_SALT_ROUNDS);
   }
 
   private toDto(user: UserWithRole): UserResponseDto {
