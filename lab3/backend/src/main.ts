@@ -7,12 +7,18 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const expressApp = app.getHttpAdapter().getInstance();
   const logger = new Logger('Bootstrap');
+  const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000';
 
   expressApp.get('/', (_req: any, res: any) => {
     res.redirect('/api');
   });
 
   app.setGlobalPrefix('v1');
+  app.enableCors({
+    origin: frontendUrl,
+    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -36,7 +42,7 @@ async function bootstrap() {
     },
   });
 
-  const port = process.env.PORT ? Number(process.env.PORT) : 3000;
+  const port = process.env.PORT ? Number(process.env.PORT) : 3001;
   await app.listen(port);
 
   logger.log(`Сервер запущено: http://localhost:${port}`);

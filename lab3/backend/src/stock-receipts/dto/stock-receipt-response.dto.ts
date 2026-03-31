@@ -40,7 +40,7 @@ class StockReceiptCreatedByDto {
   @ApiProperty({ example: 1 })
   id!: number;
 
-  @ApiProperty({ example: 'admin@warehouse.local' })
+  @ApiProperty({ example: 'admin@test.com' })
   email!: string;
 
   @ApiProperty({ example: 'Системний адміністратор' })

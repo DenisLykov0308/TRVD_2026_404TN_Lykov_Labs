@@ -5,7 +5,9 @@ import * as bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
-  const adminPasswordHash = await bcrypt.hash('Admin123!', 10);
+  const adminEmail = 'admin@test.com';
+  const legacyAdminEmail = 'admin@warehouse.local';
+  const adminPasswordHash = await bcrypt.hash('12345678', 10);
   const managerPasswordHash = await bcrypt.hash('Manager123!', 10);
 
   const adminRole = await prisma.role.upsert({
@@ -20,16 +22,34 @@ async function main() {
     create: { name: 'Комірник' },
   });
 
+  const currentAdmin = await prisma.user.findUnique({
+    where: { email: adminEmail },
+  });
+  const legacyAdmin = currentAdmin
+    ? null
+    : await prisma.user.findUnique({
+        where: { email: legacyAdminEmail },
+      });
+  if (legacyAdmin) {
+    await prisma.user.update({
+      where: { email: legacyAdminEmail },
+      data: {
+        email: adminEmail,
+        password_hash: adminPasswordHash,
+      },
+    });
+  }
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@warehouse.local' },
+    where: { email: adminEmail },
     update: {
       full_name: 'Системний адміністратор',
+      password_hash: adminPasswordHash,
       role_id: adminRole.id,
       is_active: true,
     },
     create: {
       full_name: 'Системний адміністратор',
-      email: 'admin@warehouse.local',
+      email: adminEmail,
       password_hash: adminPasswordHash,
       role_id: adminRole.id,
       is_active: true,
